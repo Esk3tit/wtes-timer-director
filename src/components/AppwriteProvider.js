@@ -2,7 +2,8 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import { useTimerState, useTimerActions } from '@/hooks/useRealtime';
+import { useTimerState } from '@/hooks/useRealtime';
+import { useTimerActions } from '@/hooks/useTimerActions';
 
 const TimerContext = createContext(undefined);
 

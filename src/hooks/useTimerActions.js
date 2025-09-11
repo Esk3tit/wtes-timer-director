@@ -1,4 +1,7 @@
-// hooks/useTimerActions.ts - Custom hook for timer actions
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+
 export const useTimerActions = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

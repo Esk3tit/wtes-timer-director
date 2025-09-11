@@ -1,7 +1,7 @@
 // app/api/timer/start/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { databases, DATABASE_ID, TIMERS_COLLECTION, QUEUE_COLLECTION } from '@/lib/appwrite';
-import { ID, Query } from 'node-appwrite';
+import { ID, Query } from 'appwrite';
 
 export async function POST(request) {
   try {
