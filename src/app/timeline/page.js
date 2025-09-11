@@ -1,11 +1,11 @@
 // app/timeline/page.tsx - Public timeline view
 'use client';
 
-import { useTimer } from '@/hooks/useRealtime';
+import { useTimerState } from '@/hooks/useRealtime';
 import TimerDisplay from '@/components/TimerDisplay';
 
 export default function TimelinePage() {
-  const { timerState, loading, error } = useTimer();
+  const { timerState, loading, error } = useTimerState();
 
   if (error) {
     return (

@@ -1,6 +1,10 @@
 // ControlPanel Component
+import { useState } from 'react';
+import { formatDuration } from '@/utils/formatTime';
+import { useTimerState } from '@/hooks/useRealtime';
+
 const ControlPanel = () => {
-  const { startTimer, controlTimer, actionsLoading, timerState } = useTimer();
+  const { startTimer, controlTimer, actionsLoading, timerState } = useTimerState();
   const [customTime, setCustomTime] = useState(30);
   const [notification, setNotification] = useState(null);
 
@@ -34,8 +38,8 @@ const ControlPanel = () => {
       {/* Notification */}
       {notification && (
         <div className={`p-4 rounded-lg ${notification.type === 'error'
-            ? 'bg-red-100 text-red-700 border border-red-300'
-            : 'bg-green-100 text-green-700 border border-green-300'
+          ? 'bg-red-100 text-red-700 border border-red-300'
+          : 'bg-green-100 text-green-700 border border-green-300'
           }`}>
           {notification.message}
         </div>
@@ -179,3 +183,5 @@ const ControlPanel = () => {
     </div>
   );
 };
+
+export default ControlPanel;

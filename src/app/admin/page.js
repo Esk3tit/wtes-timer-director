@@ -1,14 +1,14 @@
 // app/admin/page.tsx - Admin dashboard page
 'use client';
 
-import { useTimer } from '@/hooks/useRealtime';
+import { useTimerActions } from '@/hooks/useTimerActions';
 import TimerDisplay from '@/components/TimerDisplay';
 import ControlPanel from '@/components/ControlPanel';
 import QueueList from '@/components/QueueList';
 import Link from 'next/link';
 
 export default function AdminPage() {
-  const { loading, error } = useTimer();
+  const { loading, error } = useTimerActions();
 
   if (error) {
     return (

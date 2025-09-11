@@ -1,6 +1,8 @@
 // TimerDisplay Component
+import { useTimerState } from '@/hooks/useRealtime';
+
 const TimerDisplay = ({ large = false, showQueue = false }) => {
-  const { timerState, loading } = useTimer();
+  const { timerState, loading } = useTimerState();
 
   if (loading) {
     return (
@@ -63,3 +65,5 @@ const TimerDisplay = ({ large = false, showQueue = false }) => {
     </div>
   );
 };
+
+export default TimerDisplay;

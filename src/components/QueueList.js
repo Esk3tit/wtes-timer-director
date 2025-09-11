@@ -1,6 +1,10 @@
 // QueueList Component
+import { useTimerState } from '@/hooks/useRealtime';
+import TimerDisplay from './TimerDisplay';
+import ControlPanel from './ControlPanel';
+
 const QueueList = () => {
-  const { timerState, loading } = useTimer();
+  const { timerState, loading } = useTimerState();
   const queue = timerState?.queue || [];
 
   if (loading) {
