@@ -1,5 +1,6 @@
 // TimerDisplay Component
 import { useTimerState } from '@/hooks/useRealtime';
+import { formatTime, formatDuration } from '@/utils/formatTime';
 
 const TimerDisplay = ({ large = false, showQueue = false }) => {
   const { timerState, loading } = useTimerState();

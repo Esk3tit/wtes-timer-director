@@ -91,3 +91,36 @@ export default function AdminPage() {
     </div>
   );
 }
+
+// Main Admin Dashboard
+const AdminDashboard = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">Esports Timer Admin</h1>
+          <p className="text-gray-600 mt-2">Professional timer management for live broadcasts</p>
+        </div>
+
+        {/* Current Timer Display */}
+        <div className="mb-8">
+          <TimerDisplay large={false} showQueue={true} />
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Control Panel - Takes up 2 columns */}
+          <div className="lg:col-span-2">
+            <ControlPanel />
+          </div>
+
+          {/* Queue Sidebar - Takes up 1 column */}
+          <div>
+            <QueueList />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

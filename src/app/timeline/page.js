@@ -80,3 +80,17 @@ export default function TimelinePage() {
     </div>
   );
 }
+
+// Public Timeline View
+const PublicTimeline = () => {
+  return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-8">
+      <div className="max-w-4xl w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-6xl font-bold text-white mb-4">DIRECTOR TIMELINE</h1>
+        </div>
+        <TimerDisplay large={true} showQueue={true} />
+      </div>
+    </div>
+  );
+};
