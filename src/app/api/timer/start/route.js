@@ -1,7 +1,8 @@
 // app/api/timer/start/route.ts
 import { NextResponse } from 'next/server';
-import { databases, DATABASE_ID, TIMERS_COLLECTION, QUEUE_COLLECTION } from '@/lib/appwrite';
-import { ID, Query } from 'appwrite';
+import { databases, DATABASE_ID, TIMERS_COLLECTION } from '@/lib/appwrite';
+import { Query } from 'appwrite';
+import { startTimerNow, addToQueue, handlePriorityTimer } from '@/lib/timer-operations';
 
 export async function POST(request) {
   try {
@@ -64,74 +65,4 @@ export async function POST(request) {
       error: 'Internal server error. Please try again.'
     }, { status: 500 });
   }
-}
-
-// Helper functions
-async function startTimerNow(name, timeInSeconds) {
-  const now = Date.now();
-  const endTime = now + (timeInSeconds * 1000);
-
-  await databases.createDocument(
-    DATABASE_ID,
-    TIMERS_COLLECTION,
-    ID.unique(),
-    {
-      name,
-      timeInSeconds,
-      startTime: now,
-      endTime,
-      remainingMs: timeInSeconds * 1000,
-      status: 'active',
-      paused: false,
-      createdAt: now
-    }
-  );
-}
-
-async function addToQueue(name, timeInSeconds) {
-  // Get next position
-  const lastInQueue = await databases.listDocuments(
-    DATABASE_ID,
-    QUEUE_COLLECTION,
-    [Query.orderDesc('position'), Query.limit(1)]
-  );
-
-  const nextPosition = lastInQueue.documents.length > 0
-    ? lastInQueue.documents[0].position + 1
-    : 1;
-
-  await databases.createDocument(
-    DATABASE_ID,
-    QUEUE_COLLECTION,
-    ID.unique(),
-    {
-      name,
-      timeInSeconds,
-      position: nextPosition,
-      queuedAt: Date.now()
-    }
-  );
-}
-
-async function handlePriorityTimer(currentTimer) {
-  // Move current timer to front of queue
-  await databases.createDocument(
-    DATABASE_ID,
-    QUEUE_COLLECTION,
-    ID.unique(),
-    {
-      name: currentTimer.name,
-      timeInSeconds: Math.ceil(currentTimer.remainingMs / 1000),
-      position: 0.5, // Insert at front
-      queuedAt: Date.now()
-    }
-  );
-
-  // Mark current timer as interrupted
-  await databases.updateDocument(
-    DATABASE_ID,
-    TIMERS_COLLECTION,
-    currentTimer.$id,
-    { status: 'interrupted' }
-  );
 }

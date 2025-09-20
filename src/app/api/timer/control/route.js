@@ -1,6 +1,7 @@
 // app/api/timer/control/route.ts
 import { NextResponse } from 'next/server';
 import { databases, DATABASE_ID, TIMERS_COLLECTION, QUEUE_COLLECTION } from '@/lib/appwrite';
+import { startNextFromQueue, resetAllTimers } from '@/lib/timer-operations';
 import { Query } from 'appwrite';
 
 export async function POST(request) {
@@ -90,47 +91,5 @@ export async function POST(request) {
       success: false,
       error: 'Failed to control timer. Please try again.'
     }, { status: 500 });
-  }
-}
-
-async function startNextFromQueue() {
-  const queue = await databases.listDocuments(
-    DATABASE_ID,
-    QUEUE_COLLECTION,
-    [Query.orderAsc('position'), Query.limit(1)]
-  );
-
-  if (queue.documents.length > 0) {
-    const nextTimer = queue.documents[0];
-
-    // Start the timer
-    await startTimerNow(nextTimer.name, nextTimer.timeInSeconds);
-
-    // Remove from queue
-    await databases.deleteDocument(DATABASE_ID, QUEUE_COLLECTION, nextTimer.$id);
-  }
-}
-
-async function resetAllTimers() {
-  // Cancel all active timers
-  const activeTimers = await databases.listDocuments(
-    DATABASE_ID,
-    TIMERS_COLLECTION,
-    [Query.equal('status', 'active')]
-  );
-
-  for (const timer of activeTimers.documents) {
-    await databases.updateDocument(
-      DATABASE_ID,
-      TIMERS_COLLECTION,
-      timer.$id,
-      { status: 'cancelled' }
-    );
-  }
-
-  // Clear queue
-  const queueItems = await databases.listDocuments(DATABASE_ID, QUEUE_COLLECTION);
-  for (const item of queueItems.documents) {
-    await databases.deleteDocument(DATABASE_ID, QUEUE_COLLECTION, item.$id);
   }
 }

@@ -1,6 +1,7 @@
 // app/api/timer/state/route.ts
 import { NextResponse } from 'next/server';
 import { databases, DATABASE_ID, TIMERS_COLLECTION, QUEUE_COLLECTION } from '@/lib/appwrite';
+import { startNextFromQueue } from '@/lib/timer-operations';
 import { Query } from 'appwrite';
 
 export async function GET(request) {
