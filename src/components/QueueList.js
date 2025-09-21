@@ -1,7 +1,6 @@
 // QueueList Component
 import { useTimerState } from '@/hooks/useRealtime';
-import TimerDisplay from './TimerDisplay';
-import ControlPanel from './ControlPanel';
+import { formatDuration } from '@/utils/formatTime';
 
 const QueueList = () => {
   const { timerState, loading } = useTimerState();

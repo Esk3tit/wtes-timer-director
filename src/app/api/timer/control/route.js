@@ -1,6 +1,6 @@
 // app/api/timer/control/route.ts
 import { NextResponse } from 'next/server';
-import { databases, DATABASE_ID, TIMERS_COLLECTION, QUEUE_COLLECTION } from '@/lib/appwrite';
+import { tables, DATABASE_ID, TIMERS_COLLECTION } from '@/lib/appwrite';
 import { startNextFromQueue, resetAllTimers } from '@/lib/timer-operations';
 import { Query } from 'appwrite';
 
@@ -17,26 +17,26 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const activeTimers = await databases.listDocuments(
-      DATABASE_ID,
-      TIMERS_COLLECTION,
-      [Query.equal('status', 'active'), Query.limit(1)]
-    );
+    const activeTimers = await tables.listRows({
+      databaseId: DATABASE_ID,
+      tableId: TIMERS_COLLECTION,
+      queries: [Query.equal('status', 'active'), Query.limit(1)]
+    });
 
-    const currentTimer = activeTimers.documents[0];
+    const currentTimer = activeTimers.rows && activeTimers.rows[0];
 
     switch (action) {
       case 'pause':
         if (currentTimer && !currentTimer.paused) {
-          await databases.updateDocument(
-            DATABASE_ID,
-            TIMERS_COLLECTION,
-            currentTimer.$id,
-            {
+          await tables.updateRow({
+            databaseId: DATABASE_ID,
+            tableId: TIMERS_COLLECTION,
+            rowId: currentTimer.$id,
+            data: {
               paused: true,
               pausedAt: Date.now()
             }
-          );
+          });
         }
         break;
 
@@ -46,28 +46,28 @@ export async function POST(request) {
           const pauseDuration = now - currentTimer.pausedAt;
           const newEndTime = currentTimer.endTime + pauseDuration;
 
-          await databases.updateDocument(
-            DATABASE_ID,
-            TIMERS_COLLECTION,
-            currentTimer.$id,
-            {
+          await tables.updateRow({
+            databaseId: DATABASE_ID,
+            tableId: TIMERS_COLLECTION,
+            rowId: currentTimer.$id,
+            data: {
               paused: false,
               pausedAt: null,
               endTime: newEndTime,
               remainingMs: newEndTime - now
             }
-          );
+          });
         }
         break;
 
       case 'skip':
         if (currentTimer) {
-          await databases.updateDocument(
-            DATABASE_ID,
-            TIMERS_COLLECTION,
-            currentTimer.$id,
-            { status: 'completed', completedAt: Date.now() }
-          );
+          await tables.updateRow({
+            databaseId: DATABASE_ID,
+            tableId: TIMERS_COLLECTION,
+            rowId: currentTimer.$id,
+            data: { status: 'completed', completedAt: Date.now() }
+          });
 
           await startNextFromQueue();
         }

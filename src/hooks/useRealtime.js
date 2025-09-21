@@ -11,7 +11,7 @@ export const useTimerState = () => {
   // Fetch initial state
   const fetchState = useCallback(async () => {
     try {
-      const response = await fetch('/api/timer/state');
+      const response = await fetch("/api/timer/state" , { cache: 'no-store' });
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -32,30 +32,36 @@ export const useTimerState = () => {
   useEffect(() => {
     fetchState();
 
+    // Debounced refetch to avoid request storms
+    let debounceId = null;
+    const triggerRefetch = () => {
+      if (debounceId) clearTimeout(debounceId);
+      debounceId = setTimeout(() => {
+        fetchState();
+      }, 150);
+    };
+
     // Subscribe to timer changes
     const unsubscribeTimers = client.subscribe(
-      `databases.${process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID}.collections.${process.env.NEXT_PUBLIC_APPWRITE_TIMERS_COLLECTION_ID}.documents`,
+      `databases.${process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID}.tables.${process.env.NEXT_PUBLIC_APPWRITE_TIMERS_COLLECTION_ID}.rows`,
       (response) => {
         console.log('Timer update:', response.events, response.payload);
-
-        // Refetch state when any timer document changes
-        fetchState();
+        triggerRefetch();
       }
     );
 
     // Subscribe to queue changes
     const unsubscribeQueue = client.subscribe(
-      `databases.${process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID}.collections.${process.env.NEXT_PUBLIC_APPWRITE_QUEUE_COLLECTION_ID}.documents`,
+      `databases.${process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID}.tables.${process.env.NEXT_PUBLIC_APPWRITE_QUEUE_COLLECTION_ID}.rows`,
       (response) => {
         console.log('Queue update:', response.events, response.payload);
-
-        // Refetch state when queue changes
-        fetchState();
+        triggerRefetch();
       }
     );
 
     // Cleanup subscriptions
     return () => {
+      if (debounceId) clearTimeout(debounceId);
       unsubscribeTimers();
       unsubscribeQueue();
     };

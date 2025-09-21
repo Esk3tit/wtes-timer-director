@@ -1,6 +1,6 @@
 // app/api/timer/start/route.ts
 import { NextResponse } from 'next/server';
-import { databases, DATABASE_ID, TIMERS_COLLECTION } from '@/lib/appwrite';
+import { tables, DATABASE_ID, TIMERS_COLLECTION } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { startTimerNow, addToQueue, handlePriorityTimer } from '@/lib/timer-operations';
 
@@ -32,16 +32,16 @@ export async function POST(request) {
     }
 
     // Check for active timer
-    const activeTimers = await databases.listDocuments(
-      DATABASE_ID,
-      TIMERS_COLLECTION,
-      [Query.equal('status', 'active'), Query.limit(1)]
-    );
+    const activeTimers = await tables.listRows({
+      databaseId: DATABASE_ID,
+      tableId: TIMERS_COLLECTION,
+      queries: [Query.equal('status', 'active'), Query.limit(1)]
+    });
 
-    if (activeTimers.documents.length === 0 || priority) {
+    if ((activeTimers.rows?.length || 0) === 0 || priority) {
       // Start immediately
       if (priority && activeTimers.documents.length > 0) {
-        await handlePriorityTimer(activeTimers.documents[0]);
+        await handlePriorityTimer(activeTimers.rows[0]);
       }
 
       await startTimerNow(name, timeInSeconds);

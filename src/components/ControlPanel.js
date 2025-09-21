@@ -4,7 +4,7 @@ import { formatDuration } from '@/utils/formatTime';
 import { useTimerActions } from '@/hooks/useTimerActions';
 
 const ControlPanel = () => {
-  const { startTimer, controlTimer, actionsLoading, timerState } = useTimerActions();
+  const { startTimer, controlTimer, loading, timerState } = useTimerActions();
   const [customTime, setCustomTime] = useState(30);
   const [notification, setNotification] = useState(null);
 
@@ -60,10 +60,10 @@ const ControlPanel = () => {
           <span className="text-gray-600">seconds</span>
           <button
             onClick={() => handleStartTimer('Custom Timer')}
-            disabled={actionsLoading || customTime <= 0}
+            disabled={loading || customTime <= 0}
             className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            {actionsLoading ? 'Starting...' : 'Start Custom'}
+            {loading ? 'Starting...' : 'Start Custom'}
           </button>
         </div>
 
@@ -89,7 +89,7 @@ const ControlPanel = () => {
             <button
               key={team}
               onClick={() => handleStartTimer(team)}
-              disabled={actionsLoading}
+              disabled={loading}
               className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 disabled:opacity-50 text-sm transition-colors"
             >
               {team}
@@ -106,7 +106,7 @@ const ControlPanel = () => {
             <button
               key={scene}
               onClick={() => handleStartTimer(scene)}
-              disabled={actionsLoading}
+              disabled={loading}
               className="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600 disabled:opacity-50 text-sm transition-colors"
             >
               {scene}
@@ -128,7 +128,7 @@ const ControlPanel = () => {
             <button
               key={name}
               onClick={() => handleStartTimer(name, time)}
-              disabled={actionsLoading}
+              disabled={loading}
               className="bg-purple-500 text-white px-3 py-2 rounded hover:bg-purple-600 disabled:opacity-50 text-sm transition-colors"
             >
               {name} ({time}s)
@@ -139,7 +139,7 @@ const ControlPanel = () => {
         {/* Match Button (Priority) */}
         <button
           onClick={() => handleStartTimer('Match', 0, true)}
-          disabled={actionsLoading}
+          disabled={loading}
           className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 disabled:opacity-50 font-bold w-full transition-colors"
         >
           🏆 MATCH (Priority Override)
@@ -152,28 +152,28 @@ const ControlPanel = () => {
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => handleControl('pause')}
-            disabled={actionsLoading || !currentTimer || currentTimer.paused}
+            disabled={loading || !currentTimer || currentTimer.paused}
             className="bg-yellow-500 text-white px-6 py-3 rounded hover:bg-yellow-600 disabled:opacity-50 font-semibold transition-colors"
           >
             ⏸️ Pause
           </button>
           <button
             onClick={() => handleControl('resume')}
-            disabled={actionsLoading || !currentTimer || !currentTimer.paused}
+            disabled={loading || !currentTimer || !currentTimer.paused}
             className="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600 disabled:opacity-50 font-semibold transition-colors"
           >
             ▶️ Resume
           </button>
           <button
             onClick={() => handleControl('skip')}
-            disabled={actionsLoading || !currentTimer}
+            disabled={loading || !currentTimer}
             className="bg-orange-500 text-white px-6 py-3 rounded hover:bg-orange-600 disabled:opacity-50 font-semibold transition-colors"
           >
             ⏭️ Skip Current
           </button>
           <button
             onClick={() => handleControl('reset')}
-            disabled={actionsLoading}
+            disabled={loading}
             className="bg-red-500 text-white px-6 py-3 rounded hover:bg-red-600 disabled:opacity-50 font-semibold transition-colors"
           >
             🔄 Reset All
