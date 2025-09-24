@@ -79,13 +79,19 @@ export async function startNextFromQueue() {
 // Handle priority timer (move current to queue)
 export async function handlePriorityTimer(currentTimer) {
   // Move current timer to front of queue
+  const now = Date.now();
+  const remainingMs = currentTimer.paused
+    ? Math.max(0, currentTimer.endTime - currentTimer.pausedAt)
+    : Math.max(0, currentTimer.endTime - now);
+  const timeInSeconds = Math.ceil(remainingMs / 1000);
+  
   await tables.createRow({
     databaseId: DATABASE_ID,
     tableId: QUEUE_COLLECTION,
     rowId: ID.unique(),
     data: {
       name: currentTimer.name,
-      timeInSeconds: Math.ceil(currentTimer.remainingMs / 1000),
+      timeInSeconds: timeInSeconds,
       position: 0.5,
       queuedAt: Date.now()
     }

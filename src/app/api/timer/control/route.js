@@ -53,8 +53,7 @@ export async function POST(request) {
             data: {
               paused: false,
               pausedAt: null,
-              endTime: newEndTime,
-              remainingMs: newEndTime - now
+              endTime: newEndTime
             }
           });
         }
