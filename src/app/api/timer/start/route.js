@@ -40,7 +40,7 @@ export async function POST(request) {
 
     if ((activeTimers.rows?.length || 0) === 0 || priority) {
       // Start immediately
-      if (priority && activeTimers.documents.length > 0) {
+      if (priority && (activeTimers.rows?.length || 0) > 0) {
         await handlePriorityTimer(activeTimers.rows[0]);
       }
 

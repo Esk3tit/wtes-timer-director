@@ -16,7 +16,6 @@ export async function startTimerNow(name, timeInSeconds) {
       timeInSeconds,
       startTime: now,
       endTime,
-      remainingMs: timeInSeconds * 1000,
       status: 'active',
       paused: false
     }
@@ -139,16 +138,6 @@ export async function getCurrentActiveTimer() {
     queries: [Query.equal('status', 'active'), Query.limit(1)]
   });
   return (activeTimers.rows && activeTimers.rows[0]) || null;
-}
-
-// Update timer remaining time
-export async function updateTimerRemainingTime(timerId, remainingMs) {
-  await tables.updateRow({
-    databaseId: DATABASE_ID,
-    tableId: TIMERS_COLLECTION,
-    rowId: timerId,
-    data: { remainingMs }
-  });
 }
 
 // Complete timer and start next

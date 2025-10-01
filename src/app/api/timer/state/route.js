@@ -25,7 +25,6 @@ export async function GET() {
     if (currentTimer && !currentTimer.paused) {
       const now = Date.now();
       const remainingMs = Math.max(0, currentTimer.endTime - now);
-      currentTimer.remainingMs = remainingMs;
 
       // Auto-complete timer if time is up
       if (remainingMs <= 0) {
