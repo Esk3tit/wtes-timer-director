@@ -1,5 +1,10 @@
 // utils/formatTime.ts - Time formatting utility
 export const formatTime = (ms) => {
+  // Handle undefined, null, or NaN values
+  if (ms === undefined || ms === null || isNaN(ms)) {
+    return '00:00:00';
+  }
+  
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);

@@ -82,6 +82,11 @@ export const useTimerState = () => {
         const now = Date.now();
         const remainingMs = Math.max(0, prevState.currentTimer.endTime - now);
 
+        // If timer just hit 0, trigger API call to complete and start next
+        if (remainingMs === 0 && prevState.currentTimer.remainingMs > 0) {
+          fetchState(); // This will call the API which handles completion and starting next timer
+        }
+
         return {
           ...prevState,
           currentTimer: {
@@ -94,7 +99,7 @@ export const useTimerState = () => {
     }, 100); // Update every 100ms for smooth countdown
 
     return () => clearInterval(interval);
-  }, [timerState?.currentTimer?.paused, timerState?.currentTimer?.$id]);
+  }, [timerState?.currentTimer?.paused, timerState?.currentTimer?.$id, fetchState]);
 
   return { timerState, loading, error, refetch: fetchState };
 };

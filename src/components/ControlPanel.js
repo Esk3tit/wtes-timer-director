@@ -35,9 +35,9 @@ const ControlPanel = () => {
 
   return (
     <div className="space-y-6">
-      {/* Notification */}
+      {/* Notification - Fixed overlay to prevent layout shift */}
       {notification && (
-        <div className={`p-4 rounded-lg ${notification.type === 'error'
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg animate-in slide-in-from-top duration-300 ${notification.type === 'error'
           ? 'bg-red-100 text-red-700 border border-red-300'
           : 'bg-green-100 text-green-700 border border-green-300'
           }`}>
