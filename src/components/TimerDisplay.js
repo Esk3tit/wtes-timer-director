@@ -1,9 +1,23 @@
-// TimerDisplay Component
+import { useState, useEffect } from 'react';
 import { useTimerState } from '@/hooks/useRealtime';
 import { formatTime, formatDuration } from '@/utils/formatTime';
 
 const TimerDisplay = ({ large = false, showQueue = false }) => {
   const { timerState, loading } = useTimerState();
+  const [, setTick] = useState(0);
+
+  // Trigger re-renders for smooth countdown
+  useEffect(() => {
+    if (!timerState?.currentTimer || timerState.currentTimer.paused) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 100); // Update every 100ms for smooth countdown
+
+    return () => clearInterval(interval);
+  }, [timerState?.currentTimer?.paused, timerState?.currentTimer?.$id]);
 
   if (loading) {
     return (
@@ -15,6 +29,14 @@ const TimerDisplay = ({ large = false, showQueue = false }) => {
 
   const currentTimer = timerState?.currentTimer;
   const queue = timerState?.queue || [];
+  
+  // Derive remainingMs from endTime (single source of truth)
+  // When paused, calculate from pausedAt; otherwise from current time
+  const remainingMs = currentTimer
+    ? currentTimer.paused
+      ? Math.max(0, currentTimer.endTime - currentTimer.pausedAt)
+      : Math.max(0, currentTimer.endTime - Date.now())
+    : 0;
 
   return (
     <div className={`bg-white rounded-lg shadow-lg ${large ? 'p-12' : 'p-8'}`}>
@@ -25,7 +47,7 @@ const TimerDisplay = ({ large = false, showQueue = false }) => {
               {currentTimer.name}
             </h2>
             <div className={`font-mono text-red-600 mb-4 ${large ? 'text-8xl' : 'text-5xl'}`}>
-              {formatTime(currentTimer.remainingMs)}
+              {formatTime(remainingMs)}
             </div>
             <div className="flex justify-center items-center space-x-4">
               <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">

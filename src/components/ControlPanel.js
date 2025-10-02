@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import { formatDuration } from '@/utils/formatTime';
 import { useTimerActions } from '@/hooks/useTimerActions';
+import { useTimerState } from '@/hooks/useRealtime';
 
 const ControlPanel = () => {
-  const { startTimer, controlTimer, loading, timerState } = useTimerActions();
+  const { startTimer, controlTimer, loading } = useTimerActions();
+  const { timerState } = useTimerState();
   const [customTime, setCustomTime] = useState(30);
   const [notification, setNotification] = useState(null);
 

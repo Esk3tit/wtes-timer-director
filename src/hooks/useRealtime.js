@@ -67,39 +67,24 @@ export const useTimerState = () => {
     };
   }, [fetchState]);
 
-  // Auto-update remaining time for smooth countdown
+  // Auto-check for timer completion (for smooth countdown, derive remainingMs in components)
   useEffect(() => {
     if (!timerState?.currentTimer || timerState.currentTimer.paused) {
       return;
     }
 
     const interval = setInterval(() => {
-      setTimerState(prevState => {
-        if (!prevState?.currentTimer || prevState.currentTimer.paused) {
-          return prevState;
-        }
+      const now = Date.now();
+      const remainingMs = Math.max(0, timerState.currentTimer.endTime - now);
 
-        const now = Date.now();
-        const remainingMs = Math.max(0, prevState.currentTimer.endTime - now);
-
-        // If timer just hit 0, trigger API call to complete and start next
-        if (remainingMs === 0 && prevState.currentTimer.remainingMs > 0) {
-          fetchState(); // This will call the API which handles completion and starting next timer
-        }
-
-        return {
-          ...prevState,
-          currentTimer: {
-            ...prevState.currentTimer,
-            remainingMs
-          },
-          serverTime: now
-        };
-      });
-    }, 100); // Update every 100ms for smooth countdown
+      // If timer just hit 0, trigger API call to complete and start next
+      if (remainingMs === 0) {
+        fetchState(); // This will call the API which handles completion and starting next timer
+      }
+    }, 100); // Check every 100ms for completion
 
     return () => clearInterval(interval);
-  }, [timerState?.currentTimer?.paused, timerState?.currentTimer?.$id, fetchState]);
+  }, [timerState?.currentTimer?.paused, timerState?.currentTimer?.$id, timerState?.currentTimer?.endTime, fetchState]);
 
   return { timerState, loading, error, refetch: fetchState };
 };
