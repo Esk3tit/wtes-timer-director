@@ -2,8 +2,12 @@ import { Client, Account, Functions, TablesDB } from "appwrite";
 
 const client = new Client()
   .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID)
-  .setDevKey(process.env.NEXT_PUBLIC_APPWRITE_DEV_KEY);
+  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID);
+
+// Only set dev key in development/local environment
+if (process.env.NEXT_PUBLIC_APPWRITE_DEV_KEY) {
+  client.setDevKey(process.env.NEXT_PUBLIC_APPWRITE_DEV_KEY);
+}
 
 const account = new Account(client);
 const functions = new Functions(client);
