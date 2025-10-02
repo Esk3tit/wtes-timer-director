@@ -41,10 +41,9 @@ export const useTimerActions = () => {
 
   const startTimer = useCallback(async (
     name,
-    timeInSeconds,
-    priority = false
+    timeInSeconds
   ) => {
-    return apiCall('start', 'POST', { name, timeInSeconds, priority });
+    return apiCall('start', 'POST', { name, timeInSeconds });
   }, [apiCall]);
 
   const controlTimer = useCallback(async (

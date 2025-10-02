@@ -17,10 +17,10 @@ const ControlPanel = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleStartTimer = async (name, timeInSeconds = customTime, priority = false) => {
+  const handleStartTimer = async (name, timeInSeconds = customTime) => {
     try {
-      await startTimer(name, timeInSeconds, priority);
-      showNotification(`${name} ${priority ? 'started (priority)' : 'queued'} successfully`);
+      await startTimer(name, timeInSeconds);
+      showNotification(`${name} queued successfully`);
     } catch (error) {
       showNotification(error.message, 'error');
     }
@@ -138,13 +138,13 @@ const ControlPanel = () => {
           ))}
         </div>
 
-        {/* Match Button (Priority) */}
+        {/* Match Button (Auto-Pause) */}
         <button
-          onClick={() => handleStartTimer('Match', 0, true)}
+          onClick={() => handleStartTimer('Match', 1)}
           disabled={loading}
           className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 disabled:opacity-50 font-bold w-full transition-colors"
         >
-          🏆 MATCH (Priority Override)
+          🏆 MATCH (Auto-Pause)
         </button>
       </div>
 

@@ -7,6 +7,9 @@ export async function startTimerNow(name, timeInSeconds) {
   const now = Date.now();
   const endTime = now + (timeInSeconds * 1000);
   
+  // Auto-pause Match events (blocking event until manually resumed)
+  const isMatch = name === 'Match';
+  
   const timer = await tables.createRow({
     databaseId: DATABASE_ID,
     tableId: TIMERS_COLLECTION,
@@ -17,7 +20,8 @@ export async function startTimerNow(name, timeInSeconds) {
       startTime: now,
       endTime,
       status: 'active',
-      paused: false
+      paused: isMatch,
+      pausedAt: isMatch ? now : null
     }
   });
   
@@ -73,36 +77,6 @@ export async function startNextFromQueue() {
   }
   
   return null;
-}
-
-// Handle priority timer (move current to queue)
-export async function handlePriorityTimer(currentTimer) {
-  // Move current timer to front of queue
-  const now = Date.now();
-  const remainingMs = currentTimer.paused
-    ? Math.max(0, currentTimer.endTime - currentTimer.pausedAt)
-    : Math.max(0, currentTimer.endTime - now);
-  const timeInSeconds = Math.ceil(remainingMs / 1000);
-  
-  await tables.createRow({
-    databaseId: DATABASE_ID,
-    tableId: QUEUE_COLLECTION,
-    rowId: ID.unique(),
-    data: {
-      name: currentTimer.name,
-      timeInSeconds: timeInSeconds,
-      position: 0.5,
-      queuedAt: Date.now()
-    }
-  });
-  
-  // Mark current timer as interrupted
-  await tables.updateRow({
-    databaseId: DATABASE_ID,
-    tableId: TIMERS_COLLECTION,
-    rowId: currentTimer.$id,
-    data: { status: 'interrupted' }
-  });
 }
 
 // Reset all timers and queue

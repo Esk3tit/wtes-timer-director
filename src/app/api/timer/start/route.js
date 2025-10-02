@@ -2,12 +2,12 @@
 import { NextResponse } from 'next/server';
 import { tables, DATABASE_ID, TIMERS_COLLECTION } from '@/lib/appwrite';
 import { Query } from 'appwrite';
-import { startTimerNow, addToQueue, handlePriorityTimer } from '@/lib/timer-operations';
+import { startTimerNow, addToQueue } from '@/lib/timer-operations';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, timeInSeconds, priority = false } = body;
+    const { name, timeInSeconds } = body;
 
     // Validation
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -17,7 +17,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    if (!timeInSeconds || typeof timeInSeconds !== 'number' || timeInSeconds < 0) {
+    if (typeof timeInSeconds !== 'number' || timeInSeconds < 0) {
       return NextResponse.json({
         success: false,
         error: 'Time must be a non-negative number in seconds'
@@ -38,12 +38,8 @@ export async function POST(request) {
       queries: [Query.equal('status', 'active'), Query.limit(1)]
     });
 
-    if ((activeTimers.rows?.length || 0) === 0 || priority) {
-      // Start immediately
-      if (priority && (activeTimers.rows?.length || 0) > 0) {
-        await handlePriorityTimer(activeTimers.rows[0]);
-      }
-
+    if ((activeTimers.rows?.length || 0) === 0) {
+      // No active timer, start immediately
       await startTimerNow(name, timeInSeconds);
     } else {
       // Add to queue
@@ -51,11 +47,11 @@ export async function POST(request) {
     }
 
     // Log for monitoring
-    console.log(`Timer action: ${priority ? 'PRIORITY START' : 'START/QUEUE'} - ${name} (${timeInSeconds}s)`);
+    console.log(`Timer action: START/QUEUE - ${name} (${timeInSeconds}s)`);
 
     return NextResponse.json({
       success: true,
-      message: priority ? 'Timer started with priority' : 'Timer started/queued successfully'
+      message: 'Timer started/queued successfully'
     });
 
   } catch (error) {
