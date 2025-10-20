@@ -9,6 +9,12 @@ const ControlPanel = () => {
   const { timerState } = useTimerState();
   const [customTime, setCustomTime] = useState(30);
   const [notification, setNotification] = useState(null);
+  const [adDurations, setAdDurations] = useState({
+    'Hercules': 5,
+    'Thrustmaster': 5,
+    'Tank AD': 5,
+    'Heli AD': 5,
+  });
 
   const currentTimer = timerState?.currentTimer;
 
@@ -33,6 +39,13 @@ const ControlPanel = () => {
     } catch (error) {
       showNotification(error.message, 'error');
     }
+  };
+
+  const handleAdDurationChange = (adName, duration) => {
+    setAdDurations(prev => ({
+      ...prev,
+      [adName]: parseInt(duration) || 0
+    }));
   };
 
   return (
@@ -120,21 +133,28 @@ const ControlPanel = () => {
       {/* Special Actions */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h3 className="text-xl font-bold mb-4">Special Actions</h3>
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {[
-            { name: 'Hercules', time: 5 },
-            { name: 'Thrustmaster', time: 5 },
-            { name: 'Tank AD', time: 5 },
-            { name: 'Heli AD', time: 5 },
-          ].map(({ name, time }) => (
-            <button
-              key={name}
-              onClick={() => handleStartTimer(name, time)}
-              disabled={loading}
-              className="bg-purple-500 text-white px-3 py-2 rounded hover:bg-purple-600 disabled:opacity-50 text-sm transition-colors"
-            >
-              {name} ({time}s)
-            </button>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          {['Hercules', 'Thrustmaster', 'Tank AD', 'Heli AD'].map((name) => (
+            <div key={name} className="flex flex-col space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="number"
+                  value={adDurations[name]}
+                  onChange={(e) => handleAdDurationChange(name, e.target.value)}
+                  className="border rounded px-2 py-1 w-16 text-sm"
+                  min="1"
+                  placeholder="sec"
+                />
+                <span className="text-xs text-gray-600">seconds</span>
+              </div>
+              <button
+                onClick={() => handleStartTimer(name, adDurations[name])}
+                disabled={loading || adDurations[name] <= 0}
+                className="bg-purple-500 text-white px-3 py-2 rounded hover:bg-purple-600 disabled:opacity-50 text-sm transition-colors w-full"
+              >
+                {name}
+              </button>
+            </div>
           ))}
         </div>
 
