@@ -1,17 +1,30 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { client } from '@/lib/appwrite';
 
-export const useTimerState = () => {
+// Create context for timer state
+const TimerStateContext = createContext(null);
+
+// Provider component - SINGLE source of truth for timer state
+export const TimerStateProvider = ({ children }) => {
   const [timerState, setTimerState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const inflightRequest = useRef(false); // Prevent duplicate requests
 
-  // Fetch initial state
+  // Fetch initial state with request deduplication
   const fetchState = useCallback(async () => {
+    // Prevent multiple simultaneous requests
+    if (inflightRequest.current) {
+      console.log('Request already in flight, skipping duplicate');
+      return;
+    }
+
+    inflightRequest.current = true;
+    
     try {
-      const response = await fetch("/api/timer/state" , { cache: 'no-store' });
+      const response = await fetch("/api/timer/state", { cache: 'no-store' });
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -25,10 +38,11 @@ export const useTimerState = () => {
       console.error('Fetch state error:', err);
     } finally {
       setLoading(false);
+      inflightRequest.current = false;
     }
   }, []);
 
-  // Set up real-time subscriptions
+  // Set up real-time subscriptions (SINGLE instance)
   useEffect(() => {
     fetchState();
 
@@ -67,7 +81,7 @@ export const useTimerState = () => {
     };
   }, [fetchState]);
 
-  // Auto-check for timer completion (for smooth countdown, derive remainingMs in components)
+  // Auto-check for timer completion (SINGLE interval for all components)
   useEffect(() => {
     if (!timerState?.currentTimer || timerState.currentTimer.paused) {
       return;
@@ -79,12 +93,34 @@ export const useTimerState = () => {
 
       // If timer just hit 0, trigger API call to complete and start next
       if (remainingMs === 0) {
-        fetchState(); // This will call the API which handles completion and starting next timer
+        fetchState(); // Single request, deduplicated
       }
     }, 100); // Check every 100ms for completion
 
     return () => clearInterval(interval);
   }, [timerState?.currentTimer?.paused, timerState?.currentTimer?.$id, timerState?.currentTimer?.endTime, fetchState]);
 
-  return { timerState, loading, error, refetch: fetchState };
+  const value = {
+    timerState,
+    loading,
+    error,
+    refetch: fetchState
+  };
+
+  return (
+    <TimerStateContext.Provider value={value}>
+      {children}
+    </TimerStateContext.Provider>
+  );
+};
+
+// Hook to consume timer state (components use this instead of creating their own state)
+export const useTimerState = () => {
+  const context = useContext(TimerStateContext);
+  
+  if (!context) {
+    throw new Error('useTimerState must be used within TimerStateProvider');
+  }
+  
+  return context;
 };

@@ -1,7 +1,7 @@
 // app/layout.tsx - Root layout with provider
 import { Inter } from 'next/font/google';
 import './app.css';
-import { TimerProvider } from '@/components/AppwriteProvider';
+import { Providers } from '@/components/Providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,9 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <TimerProvider>
+        <Providers>
           {children}
-        </TimerProvider>
+        </Providers>
       </body>
     </html>
   );
