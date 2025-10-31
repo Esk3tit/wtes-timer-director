@@ -1,7 +1,7 @@
 // app/api/timer/control/route.ts
 import { NextResponse } from 'next/server';
 import { tables, DATABASE_ID, TIMERS_COLLECTION } from '@/lib/appwrite';
-import { startNextFromQueue, resetAllTimers } from '@/lib/timer-operations';
+import { startNextFromQueue, resetAllTimers, completeTimerAndStartNext } from '@/lib/timer-operations';
 import { Query } from 'appwrite';
 
 export async function POST(request) {
@@ -44,14 +44,8 @@ export async function POST(request) {
         if (currentTimer && currentTimer.paused) {
           // Match events complete immediately when resumed
           if (currentTimer.name === 'Match') {
-            await tables.updateRow({
-              databaseId: DATABASE_ID,
-              tableId: TIMERS_COLLECTION,
-              rowId: currentTimer.$id,
-              data: { status: 'completed', completedAt: Date.now() }
-            });
-
-            await startNextFromQueue();
+            // Use completeTimerAndStartNext to properly handle transitions
+            await completeTimerAndStartNext(currentTimer.$id);
           } else {
             // Normal resume: adjust endTime to account for pause duration
             const now = Date.now();
@@ -74,14 +68,8 @@ export async function POST(request) {
 
       case 'skip':
         if (currentTimer) {
-          await tables.updateRow({
-            databaseId: DATABASE_ID,
-            tableId: TIMERS_COLLECTION,
-            rowId: currentTimer.$id,
-            data: { status: 'completed', completedAt: Date.now() }
-          });
-
-          await startNextFromQueue();
+          // Use completeTimerAndStartNext to properly handle transitions
+          await completeTimerAndStartNext(currentTimer.$id);
         }
         break;
 

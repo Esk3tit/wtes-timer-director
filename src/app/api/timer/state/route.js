@@ -1,7 +1,7 @@
 // app/api/timer/state/route.ts
 import { NextResponse } from 'next/server';
 import { tables, DATABASE_ID, TIMERS_COLLECTION, QUEUE_COLLECTION } from '@/lib/appwrite';
-import { startNextFromQueue } from '@/lib/timer-operations';
+import { completeTimerAndStartNext } from '@/lib/timer-operations';
 import { Query } from 'appwrite';
 
 export async function GET() {
@@ -28,15 +28,8 @@ export async function GET() {
 
       // Auto-complete timer if time is up
       if (remainingMs <= 0) {
-        await tables.updateRow({
-          databaseId: DATABASE_ID,
-          tableId: TIMERS_COLLECTION,
-          rowId: currentTimer.$id,
-          data: { status: 'completed', completedAt: Date.now() }
-        });
-
-        // Start next timer
-        await startNextFromQueue();
+        // Complete timer and start next (with transition logic)
+        await completeTimerAndStartNext(currentTimer.$id);
 
         // Re-fetch updated state (single pass)
         const [newActive, newQueue] = await Promise.all([
