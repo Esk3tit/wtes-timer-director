@@ -35,7 +35,13 @@ const ControlPanel = () => {
   const handleControl = async (action) => {
     try {
       await controlTimer(action);
-      showNotification(`Timer ${action}ed successfully`);
+      const actionMessages = {
+        pause: 'Timer paused successfully',
+        resume: 'Timer resumed successfully',
+        skip: 'Timer skipped successfully',
+        reset: 'All timers reset successfully'
+      };
+      showNotification(actionMessages[action] || `Timer ${action} completed`);
     } catch (error) {
       showNotification(error.message, 'error');
     }

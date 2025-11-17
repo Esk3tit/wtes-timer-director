@@ -105,6 +105,17 @@ export default function AdminPage() {
         </div>
       </header>
 
+      {/* Settings Notification - Fixed overlay to prevent layout shift */}
+      {settingsMessage && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg animate-in slide-in-from-top duration-300 ${
+          settingsMessage.type === 'error'
+            ? 'bg-red-100 text-red-700 border border-red-300'
+            : 'bg-green-100 text-green-700 border border-green-300'
+        }`}>
+          {settingsMessage.text}
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-6">
         {loading ? (
@@ -171,16 +182,6 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Settings message */}
-                    {settingsMessage && (
-                      <div className={`p-3 rounded-lg ${
-                        settingsMessage.type === 'error'
-                          ? 'bg-red-100 text-red-700 border border-red-300'
-                          : 'bg-green-100 text-green-700 border border-green-300'
-                      }`}>
-                        {settingsMessage.text}
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
