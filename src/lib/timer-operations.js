@@ -2,6 +2,15 @@
 import { tables, DATABASE_ID, TIMERS_COLLECTION, QUEUE_COLLECTION } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 import { getTransitionDelay } from '@/lib/settings-operations';
+import { 
+  logTimerStart, 
+  logTimerComplete, 
+  logQueueAdd, 
+  logQueueRemove, 
+  logResetAll, 
+  logTransitionStart,
+  logTransitionComplete
+} from '@/lib/event-logger';
 
 // Special name for transition timers
 const TRANSITION_TIMER_NAME = '__TRANSITION__';
@@ -28,6 +37,9 @@ export async function startTimerNow(name, timeInSeconds) {
       pausedAt: isMatch ? now : null
     }
   });
+  
+  // Log event for event sourcing
+  await logTimerStart(timer);
   
   return timer;
 }
@@ -57,6 +69,9 @@ export async function addToQueue(name, timeInSeconds) {
     }
   });
   
+  // Log event for event sourcing
+  await logQueueAdd(queueItem);
+  
   return queueItem;
 }
 
@@ -80,6 +95,9 @@ async function startTransitionTimer(duration) {
     }
   });
   
+  // Log event for event sourcing
+  await logTransitionStart(duration);
+  
   return timer;
 }
 
@@ -94,11 +112,12 @@ export async function startNextFromQueue() {
   if (queue.rows?.length > 0) {
     const nextTimer = queue.rows[0];
     
-    // Start the timer
-    const newTimer = await startTimerNow(nextTimer.name, nextTimer.timeInSeconds);
-    
-    // Remove from queue
+    // Remove from queue first (log event)
     await tables.deleteRow({ databaseId: DATABASE_ID, tableId: QUEUE_COLLECTION, rowId: nextTimer.$id });
+    await logQueueRemove(nextTimer.$id);
+    
+    // Start the timer (this will also log the timer start event)
+    const newTimer = await startTimerNow(nextTimer.name, nextTimer.timeInSeconds);
     
     return newTimer;
   }
@@ -129,6 +148,9 @@ export async function resetAllTimers() {
   for (const item of (queueItems.rows || [])) {
     await tables.deleteRow({ databaseId: DATABASE_ID, tableId: QUEUE_COLLECTION, rowId: item.$id });
   }
+  
+  // Log event for event sourcing (single reset event covers everything)
+  await logResetAll();
 }
 
 // Get current active timer
@@ -158,10 +180,14 @@ export async function completeTimerAndStartNext(timerId) {
     data: { status: 'completed', completedAt: Date.now() }
   });
   
-  // If the completed timer was a transition, start the actual next timer
+  // If the completed timer was a transition, log and start the actual next timer
   if (completingTimer.name === TRANSITION_TIMER_NAME) {
+    await logTransitionComplete();
     return await startNextFromQueue();
   }
+  
+  // Log the timer completion event
+  await logTimerComplete(timerId);
   
   // For normal timers, check if we should insert a transition delay
   const transitionDelay = await getTransitionDelay();

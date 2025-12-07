@@ -1,7 +1,8 @@
 // app/api/timer/control/route.ts
 import { NextResponse } from 'next/server';
 import { tables, DATABASE_ID, TIMERS_COLLECTION } from '@/lib/appwrite';
-import { startNextFromQueue, resetAllTimers, completeTimerAndStartNext } from '@/lib/timer-operations';
+import { resetAllTimers, completeTimerAndStartNext } from '@/lib/timer-operations';
+import { logTimerPause, logTimerResume, logTimerSkip, logTimerComplete } from '@/lib/event-logger';
 import { Query } from 'appwrite';
 
 export async function POST(request) {
@@ -28,15 +29,18 @@ export async function POST(request) {
     switch (action) {
       case 'pause':
         if (currentTimer && !currentTimer.paused) {
+          const pausedAt = Date.now();
           await tables.updateRow({
             databaseId: DATABASE_ID,
             tableId: TIMERS_COLLECTION,
             rowId: currentTimer.$id,
             data: {
               paused: true,
-              pausedAt: Date.now()
+              pausedAt: pausedAt
             }
           });
+          // Log event for event sourcing
+          await logTimerPause(currentTimer.$id, pausedAt);
         }
         break;
 
@@ -44,7 +48,8 @@ export async function POST(request) {
         if (currentTimer && currentTimer.paused) {
           // Match events complete immediately when resumed
           if (currentTimer.name === 'Match') {
-            // Use completeTimerAndStartNext to properly handle transitions
+            // Log the completion event for Match (completeTimerAndStartNext handles the rest)
+            await logTimerComplete(currentTimer.$id);
             await completeTimerAndStartNext(currentTimer.$id);
           } else {
             // Normal resume: adjust endTime to account for pause duration
@@ -62,18 +67,23 @@ export async function POST(request) {
                 endTime: newEndTime
               }
             });
+            // Log event for event sourcing
+            await logTimerResume(currentTimer.$id, newEndTime);
           }
         }
         break;
 
       case 'skip':
         if (currentTimer) {
+          // Log skip event
+          await logTimerSkip(currentTimer.$id);
           // Use completeTimerAndStartNext to properly handle transitions
           await completeTimerAndStartNext(currentTimer.$id);
         }
         break;
 
       case 'reset':
+        // resetAllTimers already logs the RESET_ALL event
         await resetAllTimers();
         break;
     }

@@ -1,4 +1,6 @@
 // app/api/timer/state/route.ts
+// Returns current real-time timer state (for admin panel)
+// Note: Timeline uses event sourcing via /api/events for delayed replay
 import { NextResponse } from 'next/server';
 import { tables, DATABASE_ID, TIMERS_COLLECTION, QUEUE_COLLECTION } from '@/lib/appwrite';
 import { completeTimerAndStartNext } from '@/lib/timer-operations';
@@ -6,6 +8,7 @@ import { Query } from 'appwrite';
 
 export async function GET() {
   try {
+    // Return current state with auto-completion logic
     const [activeTimers, queue] = await Promise.all([
       tables.listRows({
         databaseId: DATABASE_ID,

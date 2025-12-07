@@ -11,6 +11,7 @@ import Link from 'next/link';
 export default function AdminPage() {
   const { loading, error } = useTimerActions();
   const [transitionDelay, setTransitionDelay] = useState(0);
+  const [broadcastDelay, setBroadcastDelay] = useState(180);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState(null);
@@ -22,7 +23,8 @@ export default function AdminPage() {
         const response = await fetch('/api/settings');
         const data = await response.json();
         if (data.success) {
-          setTransitionDelay(data.data.transitionDelay);
+          setTransitionDelay(data.data.transitionDelay || 0);
+          setBroadcastDelay(data.data.broadcastDelay || 180);
         }
       } catch (error) {
         console.error('Failed to load settings:', error);
@@ -41,7 +43,7 @@ export default function AdminPage() {
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transitionDelay })
+        body: JSON.stringify({ transitionDelay, broadcastDelay })
       });
       const data = await response.json();
       if (data.success) {
@@ -138,9 +140,9 @@ export default function AdminPage() {
                     <span>Loading settings...</span>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {/* Transition Delay Setting */}
-                    <div className="flex flex-col space-y-2">
+                    <div className="flex flex-col space-y-2 pb-6 border-b">
                       <label className="font-semibold text-gray-700">
                         Global Transition Delay
                       </label>
@@ -158,13 +160,6 @@ export default function AdminPage() {
                           placeholder="Seconds"
                         />
                         <span className="text-gray-600">seconds</span>
-                        <button
-                          onClick={handleSaveSettings}
-                          disabled={settingsSaving}
-                          className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
-                        >
-                          {settingsSaving ? 'Saving...' : 'Save Settings'}
-                        </button>
                       </div>
                       
                       {/* Quick preset buttons */}
@@ -180,6 +175,56 @@ export default function AdminPage() {
                           </button>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Broadcast Delay Setting */}
+                    <div className="flex flex-col space-y-2">
+                      <label className="font-semibold text-gray-700">
+                        🎥 Broadcast Delay (Timeline View)
+                      </label>
+                      <p className="text-sm text-gray-600">
+                        The timeline view will show timer state from this many seconds ago. This syncs with streaming platforms like Twitch that have a broadcast delay.
+                      </p>
+                      <div className="flex items-center space-x-4">
+                        <input
+                          type="number"
+                          value={broadcastDelay}
+                          onChange={(e) => setBroadcastDelay(parseInt(e.target.value) || 0)}
+                          className="border rounded px-3 py-2 w-24"
+                          min="0"
+                          max="600"
+                          placeholder="Seconds"
+                        />
+                        <span className="text-gray-600">seconds</span>
+                        <span className="text-sm text-blue-600 font-semibold">
+                          ({Math.floor(broadcastDelay / 60)}:{(broadcastDelay % 60).toString().padStart(2, '0')} minutes)
+                        </span>
+                      </div>
+                      
+                      {/* Quick preset buttons */}
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-600">Quick set:</span>
+                        {[0, 30, 60, 120, 180, 240, 300].map(seconds => (
+                          <button
+                            key={seconds}
+                            onClick={() => setBroadcastDelay(seconds)}
+                            className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm transition-colors"
+                          >
+                            {seconds === 0 ? 'Off' : `${Math.floor(seconds / 60)}m`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="pt-4 border-t">
+                      <button
+                        onClick={handleSaveSettings}
+                        disabled={settingsSaving}
+                        className="bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600 disabled:opacity-50 transition-colors font-semibold"
+                      >
+                        {settingsSaving ? 'Saving...' : 'Save All Settings'}
+                      </button>
                     </div>
 
                   </div>

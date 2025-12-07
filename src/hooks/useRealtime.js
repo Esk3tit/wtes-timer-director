@@ -6,7 +6,8 @@ import { client } from '@/lib/appwrite';
 // Create context for timer state
 const TimerStateContext = createContext(null);
 
-// Provider component - SINGLE source of truth for timer state
+// Provider component - SINGLE source of truth for real-time timer state
+// Note: For delayed timeline view, use useDelayedEvents hook instead
 export const TimerStateProvider = ({ children }) => {
   const [timerState, setTimerState] = useState(null);
   const [loading, setLoading] = useState(true);
