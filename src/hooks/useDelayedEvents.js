@@ -32,24 +32,33 @@ export function useDelayedEvents(delaySeconds) {
 
   /**
    * Apply a single event to the local state
+   * IMPORTANT: When applying delayed events, we recalculate timestamps
+   * relative to NOW so the timer countdown works correctly
    */
   const applyEvent = useCallback((event) => {
     const { type, payload } = event;
+    const now = Date.now();
     
     setState(prev => {
       switch (type) {
         case EventTypes.TIMER_START:
+          // Recalculate start/end times relative to NOW
+          // so the timer countdown displays correctly
+          const timerStartTime = now;
+          const timerEndTime = now + (payload.timeInSeconds * 1000);
+          
           return {
             ...prev,
             currentTimer: {
               $id: payload.$id,
               name: payload.name,
               timeInSeconds: payload.timeInSeconds,
-              startTime: payload.startTime,
-              endTime: payload.endTime,
+              startTime: timerStartTime,
+              endTime: timerEndTime,
               status: 'active',
+              // If it was paused at creation (Match event), pause it now
               paused: payload.paused || false,
-              pausedAt: payload.pausedAt || null
+              pausedAt: payload.paused ? now : null
             },
             isTransitioning: false,
             transitionEndTime: null
@@ -62,19 +71,25 @@ export function useDelayedEvents(delaySeconds) {
             currentTimer: {
               ...prev.currentTimer,
               paused: true,
-              pausedAt: payload.pausedAt
+              pausedAt: now // Use current time for pause
             }
           };
           
         case EventTypes.TIMER_RESUME:
           if (!prev.currentTimer) return prev;
+          // Recalculate endTime based on remaining time when paused
+          const pauseDuration = prev.currentTimer.pausedAt 
+            ? now - prev.currentTimer.pausedAt 
+            : 0;
+          const adjustedEndTime = prev.currentTimer.endTime + pauseDuration;
+          
           return {
             ...prev,
             currentTimer: {
               ...prev.currentTimer,
               paused: false,
               pausedAt: null,
-              endTime: payload.newEndTime
+              endTime: adjustedEndTime
             }
           };
           
@@ -120,17 +135,21 @@ export function useDelayedEvents(delaySeconds) {
           };
           
         case EventTypes.TRANSITION_START:
+          // Recalculate transition times relative to NOW
+          const transitionStartTime = now;
+          const transitionEndTime = now + (payload.duration * 1000);
+          
           return {
             ...prev,
             isTransitioning: true,
-            transitionEndTime: payload.endTime,
+            transitionEndTime: transitionEndTime,
             // Create a pseudo-timer for the transition
             currentTimer: {
               $id: 'transition',
               name: '__TRANSITION__',
               timeInSeconds: payload.duration,
-              startTime: payload.startTime,
-              endTime: payload.endTime,
+              startTime: transitionStartTime,
+              endTime: transitionEndTime,
               status: 'active',
               paused: false,
               pausedAt: null
@@ -141,7 +160,8 @@ export function useDelayedEvents(delaySeconds) {
           return {
             ...prev,
             isTransitioning: false,
-            transitionEndTime: null
+            transitionEndTime: null,
+            currentTimer: null // Clear the transition timer
           };
           
         default:

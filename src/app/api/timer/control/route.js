@@ -8,9 +8,9 @@ import { Query } from 'appwrite';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { action } = body;
+    const { action, timerId } = body;
 
-    const allowedActions = ['pause', 'resume', 'skip', 'reset'];
+    const allowedActions = ['pause', 'resume', 'skip', 'reset', 'complete'];
     if (!allowedActions.includes(action)) {
       return NextResponse.json({
         success: false,
@@ -27,6 +27,23 @@ export async function POST(request) {
     const currentTimer = activeTimers.rows && activeTimers.rows[0];
 
     switch (action) {
+      case 'complete':
+        // Complete an expired timer - called by client when timer hits 0
+        // Requires timerId to prevent race conditions (only complete if it's the same timer)
+        if (currentTimer && currentTimer.$id === timerId) {
+          // Double-check it's actually expired
+          const now = Date.now();
+          const remainingMs = currentTimer.paused 
+            ? currentTimer.endTime - currentTimer.pausedAt
+            : currentTimer.endTime - now;
+          
+          if (remainingMs <= 0) {
+            await completeTimerAndStartNext(currentTimer.$id);
+          }
+        }
+        // If timerId doesn't match current timer, silently ignore (stale request)
+        break;
+
       case 'pause':
         if (currentTimer && !currentTimer.paused) {
           const pausedAt = Date.now();

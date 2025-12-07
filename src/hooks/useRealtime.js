@@ -12,13 +12,12 @@ export const TimerStateProvider = ({ children }) => {
   const [timerState, setTimerState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const inflightRequest = useRef(false); // Prevent duplicate requests
+  const inflightRequest = useRef(false); // Prevent duplicate fetch requests
+  const completingTimerRef = useRef(null); // Track which timer we're completing
 
-  // Fetch initial state with request deduplication
+  // Fetch state (read-only, no side effects)
   const fetchState = useCallback(async () => {
-    // Prevent multiple simultaneous requests
     if (inflightRequest.current) {
-      console.log('Request already in flight, skipping duplicate');
       return;
     }
 
@@ -40,6 +39,34 @@ export const TimerStateProvider = ({ children }) => {
     } finally {
       setLoading(false);
       inflightRequest.current = false;
+    }
+  }, []);
+
+  // Complete an expired timer (separate from fetching state)
+  const completeTimer = useCallback(async (timerId) => {
+    // Prevent duplicate completion requests for the same timer
+    if (completingTimerRef.current === timerId) {
+      return;
+    }
+    
+    completingTimerRef.current = timerId;
+    
+    try {
+      await fetch("/api/timer/control", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete', timerId })
+      });
+      // State will be updated via realtime subscription
+    } catch (err) {
+      console.error('Complete timer error:', err);
+    } finally {
+      // Reset after a short delay to allow for state update
+      setTimeout(() => {
+        if (completingTimerRef.current === timerId) {
+          completingTimerRef.current = null;
+        }
+      }, 1000);
     }
   }, []);
 
@@ -88,18 +115,20 @@ export const TimerStateProvider = ({ children }) => {
       return;
     }
 
+    const timerId = timerState.currentTimer.$id;
+    
     const interval = setInterval(() => {
       const now = Date.now();
       const remainingMs = Math.max(0, timerState.currentTimer.endTime - now);
 
-      // If timer just hit 0, trigger API call to complete and start next
+      // If timer just hit 0, call complete endpoint
       if (remainingMs === 0) {
-        fetchState(); // Single request, deduplicated
+        completeTimer(timerId);
       }
     }, 100); // Check every 100ms for completion
 
     return () => clearInterval(interval);
-  }, [timerState?.currentTimer?.paused, timerState?.currentTimer?.$id, timerState?.currentTimer?.endTime, fetchState]);
+  }, [timerState?.currentTimer?.paused, timerState?.currentTimer?.$id, timerState?.currentTimer?.endTime, completeTimer]);
 
   const value = {
     timerState,
