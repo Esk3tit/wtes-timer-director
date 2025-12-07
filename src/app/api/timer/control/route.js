@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { tables, DATABASE_ID, TIMERS_COLLECTION } from '@/lib/appwrite';
 import { resetAllTimers, completeTimerAndStartNext } from '@/lib/timer-operations';
-import { logTimerPause, logTimerResume, logTimerSkip, logTimerComplete } from '@/lib/event-logger';
+import { logTimerPause, logTimerResume, logTimerSkip } from '@/lib/event-logger';
 import { Query } from 'appwrite';
 
 export async function POST(request) {
@@ -65,8 +65,7 @@ export async function POST(request) {
         if (currentTimer && currentTimer.paused) {
           // Match events complete immediately when resumed
           if (currentTimer.name === 'Match') {
-            // Log the completion event for Match (completeTimerAndStartNext handles the rest)
-            await logTimerComplete(currentTimer.$id);
+            // completeTimerAndStartNext will log TIMER_COMPLETE internally
             await completeTimerAndStartNext(currentTimer.$id);
           } else {
             // Normal resume: adjust endTime to account for pause duration
